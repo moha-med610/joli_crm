@@ -36,12 +36,12 @@ export class AuthService {
 
     const user: UsersDocument | null = await this.Users.findOne({ email });
     if (!user) {
-      throw new UnauthorizedException('Invalid Credentials');
+      throw new BadRequestException('Invalid Credentials');
     }
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
-      throw new UnauthorizedException('Invalid Credentials');
+      throw new BadRequestException('Invalid Credentials');
     }
 
     const payload: UserPayload = {
