@@ -8,20 +8,31 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UsersDocument } from './schema/users.schema';
-import { TokenService } from '../token/token.service';
-import { CreateUserDto, LoginDto } from './dto/auth.dto';
+import { User, UserDocument } from './schema/users.schema';
+import { TokenService } from '../../common/modules/token/token.service';
+import {
+  ChangePasswordDto,
+  CreateUserDto,
+  ForgetPasswordDto,
+  LoginDto,
+  RefreshTokenDto,
+  ResetPasswordDto,
+  VerifyForgetPasswordOtpDto,
+} from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { UserPayload } from 'src/common/types/userPayload.type';
-import { EncryptionService } from '../encryption/encryption.service';
-import { EmailsService } from '../emails/emails.service';
+import { EncryptionService } from '../../common/modules/encryption/encryption.service';
+import { EmailsService } from '../../common/modules/emails/emails.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { type Cache } from 'cache-manager';
+import { generateSecurePassword } from 'src/utils/security/generatePassword';
+import { Role } from 'src/common/enums/userRole.enum';
+import { authData } from 'src/common/types/authData.type';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel('User') private readonly Users: Model<User>,
+    @InjectModel('User') private readonly UsersModel: Model<User>,
     private readonly config: ConfigService,
     private readonly tokenService: TokenService,
     private readonly encryptionService: EncryptionService,
@@ -29,12 +40,10 @@ export class AuthService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  async login(
-    data: LoginDto,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  async login(data: LoginDto) {
     const { email, password } = data;
 
-    const user: UsersDocument | null = await this.Users.findOne({ email });
+    const user: UserDocument | null = await this.UsersModel.findOne({ email });
     if (!user) {
       throw new BadRequestException('Invalid Credentials');
     }
@@ -64,39 +73,69 @@ export class AuthService {
     );
 
     return {
+      msg: 'Login Successfully',
       accessToken,
       refreshToken,
+      data: user,
     };
   }
 
   async createUser(data: CreateUserDto): Promise<User> {
-    const { fullName, email, password, companyName, location, phone, role } =
-      data;
-    const isEmailExist = await this.Users.findOne({ email });
+    const { fullName, email, phone } = data;
+    const isEmailExist = await this.UsersModel.findOne({ email });
     if (isEmailExist) {
       throw new BadRequestException('This Email Already In Use');
     }
 
+    const password = generateSecurePassword(8);
+
     const hashPassword = await bcrypt.hash(password, 12);
     const encryptedPhone = this.encryptionService.encrypt(phone);
 
-    const newUser = await this.Users.create({
+    const newUser: UserDocument = await this.UsersModel.create({
       fullName,
       email,
       password: hashPassword,
-      companyName,
-      location,
       phone: encryptedPhone,
-      role,
+      role: Role.COMPANY,
+      hasCompany: true,
     });
+
+    // TODO: Send Email To User With His Password
+    this.emailService.sendPasswordEmail(email, fullName, password);
 
     return newUser;
   }
 
-  async forgetPassword(data: any) {
+  async createAdmin(data: any): Promise<User> {
+    const { fullName, email, phone } = data;
+
+    const isEmailExist = await this.UsersModel.findOne({ email });
+    if (isEmailExist) {
+      throw new BadRequestException('Email Already In Use');
+    }
+
+    const password = generateSecurePassword(8);
+    const hashPassword = await bcrypt.hash(password, 12);
+    const encryptPhone = this.encryptionService.encrypt(phone);
+
+    const newUser = await this.UsersModel.create({
+      fullName,
+      email,
+      phone: encryptPhone,
+      password: hashPassword,
+      role: Role.ADMIN,
+    });
+
+    this.emailService.sendPasswordEmail(email, fullName, password);
+
+    return newUser;
+  }
+
+  async forgetPassword(data: ForgetPasswordDto) {
     const { email } = data;
 
-    const findEmail = await this.Users.findOne({ email });
+    const findEmail = await this.UsersModel.findOne({ email });
     if (!findEmail) {
       throw new NotFoundException('User Not Found');
     }
@@ -110,7 +149,7 @@ export class AuthService {
     return { msg: 'OTP Sent To Your Email' };
   }
 
-  async verifyResetPasswordOtp(data: any) {
+  async verifyResetPasswordOtp(data: VerifyForgetPasswordOtpDto) {
     const { email, otp } = data;
     const findOtp = await this.cacheManager.get(`OTP:${email}`);
 
@@ -126,10 +165,10 @@ export class AuthService {
     };
   }
 
-  async resetPassword(data: any) {
+  async resetPassword(data: ResetPasswordDto) {
     const { email, newPassword } = data;
 
-    const user = await this.Users.findOne({ email });
+    const user = await this.UsersModel.findOne({ email });
     if (!user) {
       throw new BadRequestException('Invalid Email');
     }
@@ -151,11 +190,11 @@ export class AuthService {
     };
   }
 
-  async changePassword(user: UsersDocument, data: any) {
+  async changePassword(auth: authData, data: ChangePasswordDto) {
     const { currentPassword, newPassword } = data;
-    const userId = user._id;
+    const userId = auth.user._id;
 
-    const findUser = await this.Users.findById(userId);
+    const findUser = await this.UsersModel.findById(userId);
     if (!findUser) {
       throw new BadRequestException('User Not Found');
     }
@@ -181,7 +220,7 @@ export class AuthService {
     };
   }
 
-  async refreshToken(data: any) {
+  async refreshToken(data: RefreshTokenDto) {
     const { refreshToken } = data;
 
     const verifyToken = this.tokenService.verifyToken(
@@ -218,10 +257,10 @@ export class AuthService {
     };
   }
 
-  async logout(user: UsersDocument) {
-    const userId = user?._id;
+  async logout(auth: authData) {
+    const userId = auth.user?._id;
 
-    const findUser = await this.Users.findById(userId);
+    const findUser = await this.UsersModel.findById(userId);
     if (!findUser) {
       throw new UnauthorizedException();
     }

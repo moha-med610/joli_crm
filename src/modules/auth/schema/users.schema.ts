@@ -1,9 +1,8 @@
-import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
+import { Schema, Prop, SchemaFactory, MongooseModule } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { Role } from 'src/common/enums/userRole.enum';
-import { EncryptionService } from 'src/modules/encryption/encryption.service';
 
-export type UsersDocument = HydratedDocument<User>;
+export type UserDocument = HydratedDocument<User>;
 
 @Schema({
   timestamps: true,
@@ -22,12 +21,6 @@ export class User {
   password!: string;
 
   @Prop({ required: true })
-  companyName!: string;
-
-  @Prop({ required: true, index: true })
-  location!: string;
-
-  @Prop({ required: true })
   phone!: string;
 
   @Prop({ enum: Role, default: Role.COMPANY })
@@ -35,5 +28,12 @@ export class User {
 
   @Prop({ default: 0 })
   tokenVersion!: number;
+
+  @Prop({ default: false })
+  hasCompany!: boolean;
 }
-export const Users = SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(User);
+
+export const UserModel = MongooseModule.forFeature([
+  { name: User.name, schema: UserSchema },
+]);

@@ -1,20 +1,22 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { EmailsModule } from '../../common/modules/emails/emails.module';
+import { EncryptionModule } from '../../common/modules/encryption/encryption.module';
+import { TokenModule } from '../../common/modules/token/token.module';
+import { CompanyModel } from '../company/schema/company.schema';
 import { AuthController } from './auth.controller';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Users } from './schema/users.schema';
-import { TokenModule } from '../token/token.module';
-import { EncryptionModule } from '../encryption/encryption.module';
-import { EmailsModule } from '../emails/emails.module';
+import { AuthService } from './auth.service';
+import { UserModel } from './schema/users.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'User', schema: Users }]),
+    UserModel,
+    CompanyModel,
     TokenModule,
     EncryptionModule,
     EmailsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],
+  exports: [AuthService],
 })
 export class AuthModule {}
