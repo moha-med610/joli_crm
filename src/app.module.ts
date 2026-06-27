@@ -11,6 +11,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { CompanyModule } from './modules/company/company.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './common/guards/auth.guard';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AuthGuard } from './common/guards/auth.guard';
     InvoicesModule,
     ProductsModule,
     CompanyModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}

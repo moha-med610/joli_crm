@@ -100,7 +100,11 @@ export class CustomersService extends DbRepo<Customer> {
 
     const customers = await this.CustomersModel.find({
       companyId,
-      $or: [{ name: { $regex: name, $options: 'i' } }],
+      $or: [
+        {
+          name: { $regex: name, $options: 'i' },
+        },
+      ],
     });
 
     return {
