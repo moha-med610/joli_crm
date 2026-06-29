@@ -4,19 +4,22 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Product } from './schema/products.schema';
 import { Model } from 'mongoose';
-import { Category } from './schema/category.schema';
-import { CreateCategoryDto } from './dto/category.dto';
+import { CloudinaryService } from 'src/common/modules/cloudinary/cloudinary.service';
 import { authData } from 'src/common/types/authData.type';
-import { CreateProductDto, UpdateProductDto } from './dto/products.dto';
 import { DbRepo } from 'src/repos/db.repo';
+import { CreateCategoryDto } from './dto/category.dto';
+import { CreateProductDto, UpdateProductDto } from './dto/products.dto';
+import { Category } from './schema/category.schema';
+import { Product } from './schema/products.schema';
+import { UploadApiResponse } from 'cloudinary';
 
 @Injectable()
 export class ProductsService extends DbRepo<Product> {
   constructor(
     @InjectModel(Product.name) private readonly productModel: Model<Product>,
     @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {
     super(productModel);
   }
@@ -51,7 +54,11 @@ export class ProductsService extends DbRepo<Product> {
     };
   }
 
-  async createProduct(auth: authData, data: CreateProductDto) {
+  async createProduct(
+    file: Express.Multer.File,
+    auth: authData,
+    data: CreateProductDto,
+  ) {
     const companyId = auth.company._id;
     const {
       categoryId,
@@ -61,7 +68,11 @@ export class ProductsService extends DbRepo<Product> {
       productSize,
     } = data;
 
+    const image = await this.cloudinaryService.upload(file, 'products');
+
     const newProduct = await this.productModel.create({
+      imageUrl: image.secure_url,
+      imagePublicUrl: image.public_id,
       companyId,
       categoryId,
       productName,
@@ -119,6 +130,7 @@ export class ProductsService extends DbRepo<Product> {
   }
 
   async updateProduct(
+    file: Express.Multer.File,
     auth: authData,
     data: UpdateProductDto,
     productId: string,
@@ -132,32 +144,50 @@ export class ProductsService extends DbRepo<Product> {
       productSize,
     } = data;
 
-    const product = await this.productModel
-      .findOneAndUpdate(
-        {
-          companyId,
-          _id: productId,
-        },
-        {
-          categoryId,
-          productName,
-          productDescription,
-          productPrice,
-          productSize,
-        },
-        {
-          returnDocument: 'after',
-        },
-      )
-      .populate('categoryId', '_id categoryName');
+    const product = await this.productModel.findOne({
+      companyId,
+      _id: productId,
+    });
     if (!product) {
       throw new NotFoundException('Product Not Found');
     }
 
+    let image: UploadApiResponse | null = null;
+
+    if (file) {
+      image = await this.cloudinaryService.upload(file, 'products');
+
+      await this.cloudinaryService.delete(product.imagePublicUrl);
+    }
+
+    const updateData: Record<string, any> = {
+      categoryId,
+      productName,
+      productDescription,
+      productPrice,
+      productSize,
+    };
+
+    if (image) {
+      updateData.imageUrl = image.secure_url;
+      updateData.imagePublicUrl = image.public_id;
+    }
+
+    const updatedProduct = await this.productModel.findOneAndUpdate(
+      {
+        _id: productId,
+        companyId,
+      },
+      updateData,
+      {
+        returnDocument: 'after',
+      },
+    );
+
     return {
       msg: 'Product Updated Successfully',
       data: {
-        product,
+        product: updatedProduct,
       },
     };
   }
@@ -165,13 +195,17 @@ export class ProductsService extends DbRepo<Product> {
   async deleteProduct(auth: authData, productId: string) {
     const companyId = auth.company._id;
 
-    const product = await this.productModel.findOneAndDelete({
+    const product = await this.productModel.findOne({
       companyId,
       _id: productId,
     });
     if (!product) {
       throw new NotFoundException('Product Not Found');
     }
+
+    await this.cloudinaryService.delete(product.imagePublicUrl);
+
+    await this.productModel.deleteOne({ _id: product._id });
 
     return {
       msg: 'Product Deleted Successfully',

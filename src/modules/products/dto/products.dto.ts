@@ -1,12 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsDecimal,
-  IsInt,
-  IsMongoId,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateProductDto {
   @IsMongoId()

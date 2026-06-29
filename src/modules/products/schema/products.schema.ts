@@ -14,6 +14,12 @@ export class Product extends Document {
   @Prop({ required: true, type: Types.ObjectId, ref: 'Category' })
   categoryId!: Types.ObjectId;
 
+  @Prop({ required: true, type: String })
+  imageUrl!: string;
+
+  @Prop({ required: true, type: String })
+  imagePublicUrl!: string;
+
   @Prop({ required: true, index: true, type: String })
   productName!: string;
 

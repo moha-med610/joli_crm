@@ -2,13 +2,19 @@ import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
+  MaxFileSizeValidator,
+  Optional,
   Param,
+  ParseFilePipe,
   Patch,
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { AuthGuard } from 'src/common/guards/auth.guard';
@@ -17,6 +23,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/common/enums/userRole.enum';
 import { CreateCategoryDto } from './dto/category.dto';
 import { CreateProductDto, UpdateProductDto } from './dto/products.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Roles(Role.COMPANY)
 @UseGuards(AuthGuard, RolesGuard)
@@ -46,11 +53,21 @@ export class ProductsController {
   }
 
   @Post()
+  @UseInterceptors(FileInterceptor('productImage'))
   async createProduct(
     @Req() req: Express.Request,
     @Body() data: CreateProductDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
-    return this.productsService.createProduct(req['auth'], data);
+    return this.productsService.createProduct(file, req['auth'], data);
   }
 
   @Get(':productId')
@@ -62,12 +79,28 @@ export class ProductsController {
   }
 
   @Patch('update/:productId')
+  @UseInterceptors(FileInterceptor('newProductImage'))
   async updateProduct(
     @Req() req: Express.Request,
     @Param('productId') productId: string,
     @Body() data: UpdateProductDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: false,
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
-    return this.productsService.updateProduct(req['auth'], data, productId);
+    return this.productsService.updateProduct(
+      file,
+      req['auth'],
+      data,
+      productId,
+    );
   }
 
   @Delete('delete/:productId')

@@ -12,6 +12,7 @@ import { CompanyModule } from './modules/company/company.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './common/guards/auth.guard';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { CloudinaryModule } from './common/modules/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     ProductsModule,
     CompanyModule,
     DashboardModule,
+    CloudinaryModule,
   ],
 })
 export class AppModule {}
