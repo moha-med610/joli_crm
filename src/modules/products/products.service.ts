@@ -84,7 +84,7 @@ export class ProductsService extends DbRepo<Product> {
     return {
       msg: 'Product Created Successfully',
       data: {
-        product: newProduct,
+        product: await newProduct.populate('categoryId', '_id categoryName'),
       },
     };
   }
@@ -173,16 +173,18 @@ export class ProductsService extends DbRepo<Product> {
       updateData.imagePublicUrl = image.public_id;
     }
 
-    const updatedProduct = await this.productModel.findOneAndUpdate(
-      {
-        _id: productId,
-        companyId,
-      },
-      updateData,
-      {
-        returnDocument: 'after',
-      },
-    );
+    const updatedProduct = await this.productModel
+      .findOneAndUpdate(
+        {
+          _id: productId,
+          companyId,
+        },
+        updateData,
+        {
+          returnDocument: 'after',
+        },
+      )
+      .populate('categoryId', '_id categoryName');
 
     return {
       msg: 'Product Updated Successfully',

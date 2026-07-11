@@ -19,19 +19,17 @@ export class DashboardService {
   async getCompanyDashboard(auth: authData) {
     const companyId = auth.company._id;
 
-    const productsCount = await this.productModel
-      .find({ companyId })
-      .countDocuments();
+    const [productsCount, customersCount] = await Promise.all([
+      this.productModel.find({ companyId }).countDocuments(),
 
-    const customerCount = await this.customerModel
-      .find({ companyId })
-      .countDocuments();
+      this.customerModel.find({ companyId }).countDocuments(),
+    ]);
 
     return {
       msg: 'Dashboard Loaded Successfully',
       data: {
         productsCount,
-        customerCount,
+        customersCount,
       },
     };
   }
