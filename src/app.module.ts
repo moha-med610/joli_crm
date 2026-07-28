@@ -26,8 +26,7 @@ import { CloudinaryModule } from './common/modules/cloudinary/cloudinary.module'
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => {
-        return { uri: 'mongodb://localhost:27017/joli_crm' };
-        // config.get<string>('MONGO_URI')
+        return { uri: config.get<string>('MONGO_URI') };
       },
     }),
 
