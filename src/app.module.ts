@@ -30,9 +30,9 @@ import { CategoriesModule } from './modules/categories/categories.module';
       useFactory: async (config: ConfigService) => {
         return {
           uri:
-            Number(process.env.NODE_ENV) === NodeEnvEnum.PRODUCTION
-              ? process.env.MONGO_URI_PROD
-              : process.env.MONGO_URI_DEV,
+            config.get('NODE_ENV') === NodeEnvEnum.PRODUCTION
+              ? config.get<string>('MONGO_URI_PROD')
+              : config.get<string>('MONGO_URI_DEV'),
         };
       },
     }),
