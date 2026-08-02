@@ -5,7 +5,6 @@ import {
   FileTypeValidator,
   Get,
   MaxFileSizeValidator,
-  Optional,
   Param,
   ParseFilePipe,
   Patch,
@@ -16,32 +15,19 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ProductsService } from './products.service';
-import { AuthGuard } from 'src/common/guards/auth.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/common/enums/userRole.enum';
-import { CreateCategoryDto } from './dto/category.dto';
+import { AuthGuard } from 'src/common/guards/auth.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateProductDto, UpdateProductDto } from './dto/products.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { ProductsService } from './products.service';
 
 @Roles(Role.COMPANY)
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
-
-  @Roles(Role.ADMIN)
-  @Post('add-category')
-  async createCategory(@Body() data: CreateCategoryDto) {
-    return this.productsService.createCategory(data);
-  }
-
-  @Roles(Role.ADMIN, Role.COMPANY)
-  @Get('categories')
-  async getCategories() {
-    return this.productsService.getCategories();
-  }
 
   @Get('')
   async getProducts(

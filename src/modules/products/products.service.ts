@@ -1,57 +1,20 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { UploadApiResponse } from 'cloudinary';
 import { Model } from 'mongoose';
 import { CloudinaryService } from 'src/common/modules/cloudinary/cloudinary.service';
 import { authData } from 'src/common/types/authData.type';
 import { DbRepo } from 'src/repos/db.repo';
-import { CreateCategoryDto } from './dto/category.dto';
 import { CreateProductDto, UpdateProductDto } from './dto/products.dto';
-import { Category } from './schema/category.schema';
 import { Product } from './schema/products.schema';
-import { UploadApiResponse } from 'cloudinary';
 
 @Injectable()
 export class ProductsService extends DbRepo<Product> {
   constructor(
     @InjectModel(Product.name) private readonly productModel: Model<Product>,
-    @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
     private readonly cloudinaryService: CloudinaryService,
   ) {
     super(productModel);
-  }
-
-  async createCategory(data: CreateCategoryDto) {
-    const { categoryName } = data;
-    const isCategoryExist = await this.categoryModel.findOne({ categoryName });
-    if (isCategoryExist) {
-      throw new BadRequestException('This Category Already Exist');
-    }
-
-    const category = await this.categoryModel.create({
-      categoryName,
-    });
-
-    return {
-      msg: 'Category Created Successfully',
-      data: {
-        category,
-      },
-    };
-  }
-
-  async getCategories() {
-    const categories = await this.categoryModel.find();
-
-    return {
-      msg: 'Categories Received Successfully',
-      data: {
-        categories,
-      },
-    };
   }
 
   async createProduct(

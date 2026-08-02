@@ -14,6 +14,7 @@ import { AuthGuard } from './common/guards/auth.guard';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CloudinaryModule } from './common/modules/cloudinary/cloudinary.module';
 import { NodeEnvEnum } from './common/enums/nodeEnv.enum';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 @Module({
   imports: [
@@ -29,9 +30,9 @@ import { NodeEnvEnum } from './common/enums/nodeEnv.enum';
       useFactory: async (config: ConfigService) => {
         return {
           uri:
-            config.get<string>('NODE_ENV') == NodeEnvEnum.PROD
-              ? config.get<string>('MONGO_URI_PROD')
-              : config.get<string>('MONGO_URI_DEV'),
+            Number(process.env.NODE_ENV) === NodeEnvEnum.PRODUCTION
+              ? process.env.MONGO_URI_PROD
+              : process.env.MONGO_URI_DEV,
         };
       },
     }),
@@ -39,6 +40,7 @@ import { NodeEnvEnum } from './common/enums/nodeEnv.enum';
     // Cache Configuration
     CacheModule.register({
       isGlobal: true,
+      ttl: 10 * 60 * 1000,
     }),
 
     // Features
@@ -51,6 +53,7 @@ import { NodeEnvEnum } from './common/enums/nodeEnv.enum';
     CompanyModule,
     DashboardModule,
     CloudinaryModule,
+    CategoriesModule,
   ],
 })
 export class AppModule {}

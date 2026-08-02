@@ -7,13 +7,11 @@ import { UserModel } from '../auth/schema/users.schema';
 import { CompanyModel } from '../company/schema/company.schema';
 import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';
-import { CategoryModel } from './schema/category.schema';
 import { ProductModel } from './schema/products.schema';
 
 @Module({
   imports: [
     ProductModel,
-    CategoryModel,
     UserModel,
     CompanyModel,
     EncryptionModule,
