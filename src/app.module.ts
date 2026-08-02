@@ -13,6 +13,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './common/guards/auth.guard';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CloudinaryModule } from './common/modules/cloudinary/cloudinary.module';
+import { NodeEnvEnum } from './common/enums/nodeEnv.enum';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { CloudinaryModule } from './common/modules/cloudinary/cloudinary.module'
       useFactory: async (config: ConfigService) => {
         return {
           uri:
-            config.get<string>('NODE_ENV') == 'prod'
+            config.get<string>('NODE_ENV') == NodeEnvEnum.PROD
               ? config.get<string>('MONGO_URI_PROD')
               : config.get<string>('MONGO_URI_DEV'),
         };
