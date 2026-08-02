@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserPayload } from 'src/common/types/userPayload.type';
 import { StringValue } from 'ms';
@@ -17,9 +21,13 @@ export class TokenService {
   }
 
   verifyToken(token: string, secret: string) {
-    return this.jwt.verify(token, {
-      secret: secret,
-    });
+    try {
+      return this.jwt.verify(token, {
+        secret: secret,
+      });
+    } catch (error) {
+      throw new UnauthorizedException('Invalid Token');
+    }
   }
 
   decodeToken(token: string) {

@@ -20,7 +20,7 @@ import {
   VerifyForgetPasswordOtpDto,
 } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
-import { UserPayload } from 'src/common/types/userPayload.type';
+import { JWTPayload, UserPayload } from 'src/common/types/userPayload.type';
 import { EncryptionService } from '../../common/modules/encryption/encryption.service';
 import { EmailsService } from '../../common/modules/emails/emails.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -223,13 +223,17 @@ export class AuthService {
   async refreshToken(data: RefreshTokenDto) {
     const { refreshToken } = data;
 
-    const verifyToken = this.tokenService.verifyToken(
+    const verifyToken: JWTPayload = this.tokenService.verifyToken(
       refreshToken,
       this.config.get<string>('JWT_REFRESH_TOKEN_KEY')!,
     );
 
     if (!verifyToken) {
       throw new BadRequestException('Invalid Refresh Tokens');
+    }
+
+    if (verifyToken.exp * 1000 <= Date.now()) {
+      throw new UnauthorizedException('Refresh Token Expired');
     }
 
     const payload: UserPayload = {
