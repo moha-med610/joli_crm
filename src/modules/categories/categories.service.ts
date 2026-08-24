@@ -33,9 +33,7 @@ export class CategoriesService {
 
     return {
       msg: 'Categories Received Successfully',
-      data: {
-        categories,
-      },
+      data: categories,
     };
   }
 }

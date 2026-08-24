@@ -61,6 +61,7 @@ export class ProductsService extends DbRepo<Product> {
       limit: limit,
       path: 'categoryId',
       select: '_id categoryName',
+      sort: { createdAt: -1 },
     });
 
     return {

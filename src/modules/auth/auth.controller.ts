@@ -20,11 +20,13 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/common/enums/userRole.enum';
 import { RolesGuard } from 'src/common/guards/roles.guard';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Throttle({default: {limit: 3, ttl: 5 * 1000}})
   @Post('login')
   @HttpCode(200)
   async login(@Body() data: LoginDto) {
@@ -44,6 +46,7 @@ export class AuthController {
     return this.authService.forgetPassword(data);
   }
 
+  @Throttle({ default: {ttl: 15 * 1000, limit: 3}})
   @Post('verify-otp')
   @HttpCode(202)
   async verifyForgetPasswordOtp(@Body() data: VerifyForgetPasswordOtpDto) {
@@ -73,12 +76,14 @@ export class AuthController {
     return this.authService.logout(req['auth']);
   }
 
+  @SkipThrottle()
   @UseGuards(AuthGuard)
   @Get('me')
   async profile(@Request() req: Express.Request) {
     return req['auth'];
   }
 
+  @SkipThrottle()
   @Post('refresh-token')
   @HttpCode(200)
   async refreshToken(@Body() data: RefreshTokenDto) {

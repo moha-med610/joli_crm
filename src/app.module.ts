@@ -15,9 +15,20 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CloudinaryModule } from './common/modules/cloudinary/cloudinary.module';
 import { NodeEnvEnum } from './common/enums/nodeEnv.enum';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    // Rate Limit
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 10 * 1000,
+          limit: 10
+        }
+      ],
+      errorMessage: "Too Many Requests Please Try Again Later",
+    }),
     // Configuration Module
     ConfigModule.forRoot({
       isGlobal: true,
@@ -55,5 +66,11 @@ import { CategoriesModule } from './modules/categories/categories.module';
     CloudinaryModule,
     CategoriesModule,
   ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
+    }
+  ]
 })
 export class AppModule {}

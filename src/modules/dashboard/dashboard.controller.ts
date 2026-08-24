@@ -15,4 +15,10 @@ export class DashboardController {
   async getCompanyDashboard(@Req() req: Express.Request) {
     return this.dashboardService.getCompanyDashboard(req['auth']);
   }
+
+  @Get('admin')
+  @Roles(Role.ADMIN)
+  async getAdminDashboard() {
+    return this.dashboardService.getAdminDashboard();
+  }
 }

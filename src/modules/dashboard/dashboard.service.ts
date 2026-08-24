@@ -6,6 +6,8 @@ import { Company } from '../company/schema/company.schema';
 import { Customer } from '../customers/schema/customers.schema';
 import { Product } from '../products/schema/products.schema';
 import { authData } from 'src/common/types/authData.type';
+import { Role } from 'src/common/enums/userRole.enum';
+import { Roles } from 'src/common/decorators/roles.decorator';
 
 @Injectable()
 export class DashboardService {
@@ -21,7 +23,6 @@ export class DashboardService {
 
     const [productsCount, customersCount] = await Promise.all([
       this.productModel.find({ companyId }).countDocuments(),
-
       this.customerModel.find({ companyId }).countDocuments(),
     ]);
 
@@ -34,5 +35,19 @@ export class DashboardService {
     };
   }
 
-  async getAdminDashboard() {}
+  async getAdminDashboard() {
+    const [companiesCount, usersCount] = await Promise.all([
+      this.companyModel.countDocuments(),
+      this.userModel.countDocuments(),
+      this.companyModel.find().sort({ createdAt: -1 }).limit(5),
+    ]);
+
+    return {
+      msg: 'Dashboard Loaded Successfully',
+      data: {
+        companiesCount,
+        usersCount,
+      },
+    };
+  }
 }
