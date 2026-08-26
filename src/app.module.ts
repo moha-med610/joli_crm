@@ -7,9 +7,9 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProductsModule } from './modules/products/products.module';
-import { CacheModule } from '@nestjs/cache-manager';
+import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { CompanyModule } from './modules/company/company.module';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthGuard } from './common/guards/auth.guard';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CloudinaryModule } from './common/modules/cloudinary/cloudinary.module';
@@ -24,10 +24,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
       throttlers: [
         {
           ttl: 10 * 1000,
-          limit: 10
-        }
+          limit: 10,
+        },
       ],
-      errorMessage: "Too Many Requests Please Try Again Later",
+      errorMessage: 'Too Many Requests Please Try Again Later',
     }),
     // Configuration Module
     ConfigModule.forRoot({
@@ -69,8 +69,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard
-    }
-  ]
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor,
+    },
+  ],
 })
 export class AppModule {}

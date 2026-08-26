@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { UploadApiResponse } from 'cloudinary';
 import { Model } from 'mongoose';
@@ -7,12 +7,15 @@ import { authData } from 'src/common/types/authData.type';
 import { DbRepo } from 'src/repos/db.repo';
 import { CreateProductDto, UpdateProductDto } from './dto/products.dto';
 import { Product } from './schema/products.schema';
+import { type Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class ProductsService extends DbRepo<Product> {
   constructor(
     @InjectModel(Product.name) private readonly productModel: Model<Product>,
     private readonly cloudinaryService: CloudinaryService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
   ) {
     super(productModel);
   }
@@ -43,6 +46,8 @@ export class ProductsService extends DbRepo<Product> {
       productPrice,
       productSize,
     });
+
+    await this.cache.clear();
 
     return {
       msg: 'Product Created Successfully',
