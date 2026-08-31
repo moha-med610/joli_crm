@@ -1,21 +1,20 @@
+import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
-import { AuthModule } from './modules/auth/auth.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { NodeEnvEnum } from './common/enums/nodeEnv.enum';
+import { CloudinaryModule } from './common/modules/cloudinary/cloudinary.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { CompanyModule } from './modules/company/company.module';
 import { CustomersModule } from './modules/customers/customers.module';
-import { OrdersModule } from './modules/orders/orders.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { OrdersModule } from './modules/orders/orders.module';
 import { ProductsModule } from './modules/products/products.module';
-import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
-import { CompanyModule } from './modules/company/company.module';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { AuthGuard } from './common/guards/auth.guard';
-import { DashboardModule } from './modules/dashboard/dashboard.module';
-import { CloudinaryModule } from './common/modules/cloudinary/cloudinary.module';
-import { NodeEnvEnum } from './common/enums/nodeEnv.enum';
-import { CategoriesModule } from './modules/categories/categories.module';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [

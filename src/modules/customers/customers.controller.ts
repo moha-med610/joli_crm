@@ -19,6 +19,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/common/enums/userRole.enum';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto/customer.dto';
 import { CustomerDecryptInterceptor } from 'src/common/interceptor/customerDecrypt.interceptor';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Roles(Role.COMPANY)
 @UseGuards(AuthGuard, RolesGuard)
@@ -36,6 +37,7 @@ export class CustomersController {
     return this.customersService.getCustomers(req['auth'], page, limit);
   }
 
+  @SkipThrottle()
   @Get('search')
   async searchCustomers(
     @Request() req: Express.Request,
