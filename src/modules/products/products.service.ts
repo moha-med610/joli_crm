@@ -155,6 +155,8 @@ export class ProductsService extends DbRepo<Product> {
       )
       .populate('categoryId', '_id categoryName');
 
+      await this.cache.clear();
+
     return {
       msg: 'Product Updated Successfully',
       data: {
@@ -177,6 +179,8 @@ export class ProductsService extends DbRepo<Product> {
     await this.cloudinaryService.delete(product.imagePublicUrl);
 
     await this.productModel.deleteOne({ _id: product._id });
+
+    await this.cache.clear();
 
     return {
       msg: 'Product Deleted Successfully',

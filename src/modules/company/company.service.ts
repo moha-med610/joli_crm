@@ -10,7 +10,9 @@ import { Model } from 'mongoose';
 import { AuthService } from '../auth/auth.service';
 import { User, UserDocument } from '../auth/schema/users.schema';
 import { DbRepo } from 'src/repos/db.repo';
-import { CreateCompanyDto } from './dto/company.dto';
+import { CreateCompanyDto, UpdateCompanyDto } from './dto/company.dto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { type Cache } from 'cache-manager';
 
 @Injectable()
 export class CompanyService extends DbRepo<Company> {
@@ -18,11 +20,13 @@ export class CompanyService extends DbRepo<Company> {
     @InjectModel('Company') private companyModel: Model<Company>,
     @InjectModel('User') private userModel: Model<User>,
     private readonly authService: AuthService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
   ) {
     super(companyModel);
   }
 
-  async createCompany(data: CreateCompanyDto) {
+  // Create User and Company 
+  async createUserAndCompany(data: CreateCompanyDto) {
     const { fullName, email, phone, companyName, address, city } = data;
 
     const isEmailExist = await this.userModel.findOne({ email });
@@ -43,12 +47,15 @@ export class CompanyService extends DbRepo<Company> {
       city,
     });
 
+    await this.cache.clear();
+
     return {
       msg: 'Company Created Successfully',
       data: newCompany,
     };
   }
 
+  // Get Company by ID
   async getCompanyById(companyId: string) {
     const company = await this.companyModel
       .findById(companyId)
@@ -64,6 +71,7 @@ export class CompanyService extends DbRepo<Company> {
     };
   }
 
+  // Get All Companies with Pagination
   async getAllCompanies(page: number = 1, limit: number = 20) {
     const companies = await this.findWithPagination({
       page,
@@ -78,16 +86,23 @@ export class CompanyService extends DbRepo<Company> {
     };
   }
 
+  // Delete Company and User associated with it
+  // must delete all company related data
+  // like customers, invoices, payments, etc.
   async deleteCompany(companyId: string) {
-    const company = await this.companyModel.findByIdAndDelete(companyId);
+    
+    const company = await this.companyModel.findById(companyId);
+
     if (!company) {
       throw new NotFoundException('Company Not Found');
     }
 
-    const user = await this.userModel.findByIdAndDelete(company.user);
-    if (!user) {
-      throw new NotFoundException('User Not Found');
-    }
+    Promise.all([
+      await this.userModel.findByIdAndDelete(company.user),
+      await company.deleteOne(),
+      await this.cache.clear(),
+    ]);
+    
 
     return {
       msg: 'Company Deleted Successfully',

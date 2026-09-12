@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,12 +11,15 @@ import { EncryptionService } from '../../common/modules/encryption/encryption.se
 import { authData } from 'src/common/types/authData.type';
 import { DbRepo } from 'src/repos/db.repo';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto/customer.dto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { type Cache } from 'cache-manager';
 
 @Injectable()
 export class CustomersService extends DbRepo<Customer> {
   constructor(
     @InjectModel('Customer') private CustomersModel: Model<Customer>,
     private readonly encryptionService: EncryptionService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
   ) {
     super(CustomersModel);
   }
@@ -42,6 +46,8 @@ export class CustomersService extends DbRepo<Customer> {
       whatsapp: encryptWhatsapp as string,
       notes,
     });
+
+    await this.cache.clear();
 
     return {
       msg: 'Customer Created Successfully',
@@ -147,6 +153,9 @@ export class CustomersService extends DbRepo<Customer> {
         returnDocument: 'after',
       },
     );
+
+    await this.cache.clear();
+
     if (!updateCustomer) {
       throw new NotFoundException('Customer Not Found');
     }
@@ -168,6 +177,8 @@ export class CustomersService extends DbRepo<Customer> {
       _id: customerId,
       companyId,
     });
+
+    await this.cache.clear();
 
     if (!deleteUser) {
       throw new BadRequestException('Customer Not Found');

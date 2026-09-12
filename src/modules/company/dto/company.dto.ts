@@ -1,3 +1,4 @@
+import { Optional } from '@nestjs/common';
 import { IsEmail, IsNotEmpty, IsPhoneNumber, IsString } from 'class-validator';
 
 export class CreateCompanyDto {
@@ -26,4 +27,23 @@ export class CreateCompanyDto {
   @IsString()
   @IsNotEmpty()
   city!: string;
+}
+
+export class UpdateCompanyDto {
+  @IsString()
+  @Optional()
+  companyName?: string;
+
+  @IsString()
+  @IsPhoneNumber('EG')
+  @Optional()
+  phone?: string;
+
+  @IsString()
+  @Optional()
+  address?: string;
+
+  @IsString()
+  @Optional()
+  city?: string;
 }
