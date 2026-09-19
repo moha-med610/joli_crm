@@ -25,10 +25,15 @@ export const {
 @Module({
   imports: [
     // Nest Observe
-    ObserveModule.forRoot({
-      appKey: process.env.OBSERVE_APP_KEY!,
-      appSecret: process.env.OBSERVE_APP_SECRET!,
-      serviceId: "wasla-crm"
+    ObserveModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async(config: ConfigService) => {
+        return {
+          appKey: config.get<string>("OBSERVE_APP_KEY")!,
+          appSecret: config.get<string>("OBSERVE_APP_SECRET")!,
+          serviceId: "wasla-crm"
+        }
+      }
     }),
     
     // Rate Limit
