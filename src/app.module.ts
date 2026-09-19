@@ -15,9 +15,22 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { ProductsModule } from './modules/products/products.module';
+import { createObserveModule } from '@nestjs/observe';
+
+export const {
+  ObserveModule,
+  ObserveInstrument,
+} = createObserveModule();
 
 @Module({
   imports: [
+    // Nest Observe
+    ObserveModule.forRoot({
+      appKey: process.env.OBSERVE_APP_KEY!,
+      appSecret: process.env.OBSERVE_APP_SECRET!,
+      serviceId: "wasla-crm"
+    }),
+    
     // Rate Limit
     ThrottlerModule.forRoot({
       throttlers: [

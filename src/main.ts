@@ -1,11 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { AppModule, ObserveInstrument } from './app.module';
 import helmet from 'helmet';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    instrument: ObserveInstrument
+  });
 
   app.enableCors();
   app.use(helmet());
